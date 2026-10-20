@@ -1,0 +1,19 @@
+# 仮想環境
+.venv/
+venv/
+
+# Python キャッシュ
+__pycache__/
+*.py[cod]
+
+# 機密情報
+.env
+
+# 出力・ログ
+output/
+logs/
+*.log
+
+# エディタ・OS
+.vscode/
+Thumbs.db
