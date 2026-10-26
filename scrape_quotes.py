@@ -2,7 +2,7 @@
 
 JavaScript で描画されるページのため、ブラウザで描画を待ってから取得する。
 
-- ブラウザを画面に表示して実行する(headless=False)
+- ブラウザを画面に表示して実行する(--headless 指定時は表示しない)
 - robots.txt を読み込み、禁止パスにはアクセスしない
 - リクエスト間に 1〜3 秒のランダムな待機を入れる
 - 接続エラー時はログにエラーを出力して終了する
@@ -11,6 +11,7 @@ JavaScript で描画されるページのため、ブラウザで描画を待っ
 使い方:
     python scrape_quotes.py               # 全ページを収集
     python scrape_quotes.py --max-pages 2  # 先頭 2 ページだけ収集
+    python scrape_quotes.py --headless     # ブラウザを表示せずに収集
 """
 
 import argparse
@@ -130,10 +131,11 @@ def parse_quotes(page: Page) -> list[dict[str, str]]:
     return quotes
 
 
-def scrape(max_pages: int | None, screenshot_path: Path) -> list[dict[str, str]]:
+def scrape(max_pages: int | None, screenshot_path: Path,
+           headless: bool) -> list[dict[str, str]]:
     quotes = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=headless)
         try:
             page = browser.new_page(user_agent=USER_AGENT)
             client = PoliteBrowser(page, BASE_URL)
@@ -188,6 +190,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--max-pages", type=int, default=None,
                         help="収集する最大ページ数(省略時は全ページ)")
+    parser.add_argument("--headless", action="store_true",
+                        help="ブラウザを画面に表示せずに実行する")
     args = parser.parse_args()
 
     setup_logging()
@@ -199,7 +203,7 @@ def main() -> int:
     png_path = md_path.with_suffix(".png")
 
     try:
-        quotes = scrape(args.max_pages, png_path)
+        quotes = scrape(args.max_pages, png_path, args.headless)
     except FetchError as e:
         logger.error("接続エラーが発生しました: %s", e)
         return 1
